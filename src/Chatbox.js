@@ -31,22 +31,48 @@ const sendIconStyle = {
   cursor: 'pointer',
 };
 
-const Message = ({ message }) => (
-  <List.Item style={ { marginBottom: 16 }}>
-    <div style={ { fontWeight: "bold" }}>{message.sender}</div>
-    {message.text}
-  </List.Item>
-);
+
+const Message = ({ message }) => {
+  const formattedText = message.text.split('\n').map((line, index) => (
+    <React.Fragment key={index}>
+      {line}
+      <br />
+    </React.Fragment>
+  ));
+
+  // Updated styles for sender and message text
+  const senderStyle = {
+    fontWeight: 'bold',
+    marginBottom: '4px',
+  };
+
+  const messageTextStyle = {
+    marginLeft: '1rem',
+  };
+
+  return (
+    <List.Item>
+      <div>
+        <div style={senderStyle}>{message.sender}:</div>
+        <div style={messageTextStyle}>{formattedText}</div>
+      </div>
+    </List.Item>
+  );
+};
+
 
 const ChatBox = () => {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
+
+  const [submission, setSubmission] = useState("");
+
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const textAreaRef = useRef(null); // Add this line
 
 
-  const scrollToBottomRef = useRef(null);
+  // const scrollToBottomRef = useRef(null);
 
   const handleSendMessage = useCallback(
     async (e) => {
@@ -62,6 +88,7 @@ const ChatBox = () => {
           sender: 'USER',
         };
         setMessages([...messages, newMessage]);
+        setSubmission(text.trim())
         setText('');
         textAreaRef.current.resizableTextArea.textArea.style.height = 'auto'; // Add this line
       }
@@ -73,7 +100,7 @@ const ChatBox = () => {
     const fetchResponse = async () => {
       setLoading(true);
       try {
-        const response = await getResponse(text.trim());
+        const response = await getResponse(submission);
         const responseMessage = {
           id: messages.length + 1,
           text: response,
