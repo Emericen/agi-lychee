@@ -6,13 +6,13 @@ import {
   PieChartOutlined,
   TeamOutlined,
   UserOutlined,
+  MenuUnfoldOutlined,
 } from "@ant-design/icons";
 
 import ChatBox from "./Chatbox";
 
-import { Breadcrumb, Layout, Menu, theme } from "antd";
+import { Breadcrumb, Layout, Menu, Row, Col, Drawer, Button } from "antd";
 const { Header, Content, Footer, Sider } = Layout;
-
 
 function getItem(label, key, icon, children) {
   return {
@@ -40,11 +40,14 @@ const items = [
 
 const App = () => {
   const [collapsed, setCollapsed] = useState(false);
-  const {
-    token: { colorBgContainer },
-  } = theme.useToken();
 
-
+  const contentStyle = {
+    flexGrow: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    padding: '1rem',
+  };
+  
   return (
     <Layout style={{ minHeight: "100vh" }}>
       <Sider
@@ -72,7 +75,7 @@ const App = () => {
       </Sider>
       <Layout className="site-layout">
         {/* <Header style={{ padding: 0, background: colorBgContainer }} /> */}
-        <Content style={{ margin: "0 50px" }}>
+        <Content style={contentStyle}>
           {/* <Breadcrumb style={{ margin: "16px 0" }}>
             <Breadcrumb.Item>User</Breadcrumb.Item>
             <Breadcrumb.Item>Bill</Breadcrumb.Item>

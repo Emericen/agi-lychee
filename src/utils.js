@@ -8,7 +8,7 @@ export const getResponse = async (prompt) => {
     "RLHF, on the other hand, is a type of reinforcement learning that involves learning a hierarchy of policies to control an agent in an environment. In RLHF, the agent learns to perform tasks by breaking them down into sub-tasks or actions, with each level of the hierarchy representing a different level of abstraction. RLHF has been applied to tasks such as robotics, navigation, and game playing, and has shown promising results in these domains.",
   ];
 
-  const delay = Math.floor(Math.random() * 10000); // Random delay between 0 and 10 seconds
+  const delay = Math.floor(Math.random() * 3000); // Random delay between 0 and 10 seconds
   await new Promise((resolve) => setTimeout(resolve, delay)); // Wait for the delay
   const randomIndex = Math.floor(Math.random() * responses.length);
   return responses[randomIndex];

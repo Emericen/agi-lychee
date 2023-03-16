@@ -1,154 +1,118 @@
-// import React, { useState, useRef, useEffect } from "react";
-// import { getResponse } from "./utils";
-// import { Avatar, Input, Layout, Divider, List, Skeleton } from "antd";
-// import { SendOutlined } from "@ant-design/icons";
-// import TextArea from "antd/es/input/TextArea";
-
-
-// const ChatBox = () => {
-//   const [messages, setMessages] = useState([]);
-//   const [text, setText] = useState("");
-//   const [loading, setLoading] = useState(false);
-//   const messagesEndRef = useRef(null);
-
-//   const handleSendMessage = async (e) => {
-//     if (e.key === "Enter" && !e.shiftKey) {
-//       e.preventDefault();
-//       if (text.trim() !== "") {
-//         setMessages([
-//           ...messages,
-//           { id: messages.length + 1, text: text.trim(), sender: "USER" },
-//         ]);
-//       }
-//       setText("");
-//     }
-//   };
-
-//   useEffect(() => {
-//     messagesEndRef.current.scrollTop = messagesEndRef.current.scrollHeight;
-//   }, [messages]);
-
-//   return (
-//     <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
-//       <div style={{ flex: 1, overflow: "auto" }} ref={messagesEndRef}>
-//         <List
-//           dataSource={messages}
-//           renderItem={(message) => (
-//             <List.Item style={{ textAlign: "left" }}>
-//               <div style={{ fontWeight: "bold" }}>{message.sender}</div>
-//               {message.text}
-//             </List.Item>
-//           )}
-//         />
-//         {loading && <Skeleton active />}
-//       </div>
-//       <div
-//         style={{ display: "flex", alignItems: "center", marginBottom: "30px" }}
-//       >
-//         <TextArea
-//           autoSize={{ minRows: 1, maxRows: 4 }}
-//           placeholder="Type a message"
-//           value={text}
-//           onChange={(e) => setText(e.target.value)}
-//           onPressEnter={handleSendMessage}
-//           style={{ flex: 1 }}
-//         />
-//         <SendOutlined
-//           onClick={handleSendMessage}
-//           style={{ fontSize: 24, marginLeft: 8 }}
-//         />
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default ChatBox;
-
-
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { getResponse } from "./utils";
 import { Avatar, Input, Layout, Divider, List, Skeleton } from "antd";
 import { SendOutlined } from "@ant-design/icons";
 import TextArea from "antd/es/input/TextArea";
+
+const chatContainerStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'space-between',
+  height: '100%',
+};
+
+const chatBoxStyle = {
+  overflowY: 'auto',
+  flexGrow: 1,
+  flexBasis: 0,
+  padding: '1rem',
+  marginBottom: '1rem',
+};
+
+const inputSectionStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: '0 1rem',
+};
+
+const sendIconStyle = {
+  fontSize: '1.5rem',
+  cursor: 'pointer',
+};
+
+const Message = ({ message }) => (
+  <List.Item style={ { marginBottom: 16 }}>
+    <div style={ { fontWeight: "bold" }}>{message.sender}</div>
+    {message.text}
+  </List.Item>
+);
 
 const ChatBox = () => {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  const textAreaRef = useRef(null); // Add this line
 
-  const handleSendMessage = async (e) => {
-    console.log(e);
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      if (text.trim() !== "") {
-        setMessages([
-          ...messages,
-          { id: messages.length + 1, text: text.trim(), sender: "USER" },
-        ]);
-        setLoading(true);
-        try {
-          const text_copy = text;
-          setText("");
-          const response = await getResponse(text_copy.trim());
-          setMessages((prevMessages) => {
-            const updatedMessages = [...prevMessages];
-            const lastUserMessageIndex = updatedMessages
-              .slice()
-              .reverse()
-              .findIndex((message) => message.sender === "USER");
-            if (lastUserMessageIndex !== -1) {
-              const lastUserMessage = updatedMessages[updatedMessages.length - 1 - lastUserMessageIndex];
-              const responseMessage = { id: updatedMessages.length + 1, text: response, sender: "BOT" };
-              updatedMessages.splice(updatedMessages.indexOf(lastUserMessage) + 1, 0, responseMessage);
-              return updatedMessages;
-            } else {
-              const responseMessage = { id: updatedMessages.length + 1, text: response, sender: "BOT" };
-              return [...updatedMessages, responseMessage];
-            }
-          });
-        } catch (error) {
-          console.log(error);
-        } finally {
-          setLoading(false);
-        }
+
+  const scrollToBottomRef = useRef(null);
+
+  const handleSendMessage = useCallback(
+    async (e) => {
+      if (e instanceof KeyboardEvent) {
+        if (e.key !== 'Enter' || e.shiftKey) return;
+        e.preventDefault();
       }
+  
+      if (text.trim() !== '') {
+        const newMessage = {
+          id: messages.length + 1,
+          text: text.trim(),
+          sender: 'USER',
+        };
+        setMessages([...messages, newMessage]);
+        setText('');
+        textAreaRef.current.resizableTextArea.textArea.style.height = 'auto'; // Add this line
+      }
+    },
+    [text, messages]
+  );
+
+  useEffect(() => {
+    const fetchResponse = async () => {
+      setLoading(true);
+      try {
+        const response = await getResponse(text.trim());
+        const responseMessage = {
+          id: messages.length + 1,
+          text: response,
+          sender: "BOT",
+        };
+        setMessages([...messages, responseMessage]);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (messages.length > 0 && messages[messages.length - 1].sender === "USER") {
+      fetchResponse();
     }
-  };
+  }, [messages]);
 
   useEffect(() => {
     messagesEndRef.current.scrollTop = messagesEndRef.current.scrollHeight;
   }, [messages]);
 
   return (
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
-      <div style={{ flex: 1, overflow: "auto" }} ref={messagesEndRef}>
-        <List
-          dataSource={messages}
-          renderItem={(message) => (
-            <List.Item style={{ textAlign: "left" }}>
-              <div style={{ fontWeight: "bold" }}>{message.sender}</div>
-              {message.text}
-            </List.Item>
-          )}
-        />
+    <div style={chatContainerStyle}>
+      <div style={chatBoxStyle} ref={messagesEndRef}>
+        <List dataSource={messages} renderItem={(message) => <Message message={message} />} />
         {loading && <Skeleton active />}
       </div>
-      <div
-        style={{ display: "flex", alignItems: "center", marginBottom: "30px" }}
-      >
+      <div style={inputSectionStyle}>
         <TextArea
-          autoSize={{ minRows: 1, maxRows: 4 }}
+          autoSize
           placeholder="Type a message"
           value={text}
           onChange={(e) => setText(e.target.value)}
           onPressEnter={handleSendMessage}
-          style={{ flex: 1 }}
+          style={ { width: 'calc(100% - 40px)', marginRight: '1rem', maxHeight: '100px' }} // Add maxHeight property
+          ref={textAreaRef} // Add this line
         />
-        <SendOutlined
-          onClick={handleSendMessage}
-          style={{ fontSize: 24, marginLeft: 8 }}
-        />
+        <SendOutlined onClick={handleSendMessage} style={sendIconStyle} />
       </div>
     </div>
   );
