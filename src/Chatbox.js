@@ -1,39 +1,40 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { getResponse } from "./utils";
+import { useSelector, useDispatch } from "react-redux";
 import { Avatar, Input, Layout, Divider, List, Skeleton } from "antd";
 import { SendOutlined } from "@ant-design/icons";
 import TextArea from "antd/es/input/TextArea";
+import { addMessage, removeMessage } from "./store";
 
 const chatContainerStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'space-between',
-  height: '100%',
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "space-between",
+  height: "100%",
 };
 
 const chatBoxStyle = {
-  overflowY: 'auto',
+  overflowY: "auto",
   flexGrow: 1,
   flexBasis: 0,
-  padding: '1rem',
-  marginBottom: '1rem',
+  padding: "1rem",
+  marginBottom: "1rem",
 };
 
 const inputSectionStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: '0 1rem',
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  padding: "0 1rem",
 };
 
 const sendIconStyle = {
-  fontSize: '1.5rem',
-  cursor: 'pointer',
+  fontSize: "1.5rem",
+  cursor: "pointer",
 };
 
-
-const Message = ({ message }) => {
-  const formattedText = message.text.split('\n').map((line, index) => (
+const Message = React.memo(({ message, loading }) => {
+  const formattedText = message.text.split("\n").map((line, index) => (
     <React.Fragment key={index}>
       {line}
       <br />
@@ -42,13 +43,21 @@ const Message = ({ message }) => {
 
   // Updated styles for sender and message text
   const senderStyle = {
-    fontWeight: 'bold',
-    marginBottom: '4px',
+    fontWeight: "bold",
+    marginBottom: "4px",
   };
 
   const messageTextStyle = {
-    marginLeft: '1rem',
+    marginLeft: "1rem",
   };
+
+  if (loading) {
+    return (
+      <List.Item>
+        <Skeleton active />
+      </List.Item>
+    );
+  }
 
   return (
     <List.Item>
@@ -58,66 +67,76 @@ const Message = ({ message }) => {
       </div>
     </List.Item>
   );
-};
-
+});
 
 const ChatBox = () => {
-  const [messages, setMessages] = useState([]);
-  const [text, setText] = useState("");
+  // Replace the useState for messages with useSelector
+  const messages = useSelector((state) => state.messages);
 
-  const [submission, setSubmission] = useState("");
+  // Use useDispatch to get a reference to the dispatch function
+  const dispatch = useDispatch();
+
+  const [text, setText] = useState("");
 
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const textAreaRef = useRef(null); // Add this line
 
-
-  // const scrollToBottomRef = useRef(null);
-
   const handleSendMessage = useCallback(
     async (e) => {
       if (e instanceof KeyboardEvent) {
-        if (e.key !== 'Enter' || e.shiftKey) return;
+        if (e.key !== "Enter" || e.shiftKey) return;
         e.preventDefault();
       }
-  
-      if (text.trim() !== '') {
+
+      if (text.trim() !== "") {
         const newMessage = {
           id: messages.length + 1,
           text: text.trim(),
-          sender: 'USER',
+          sender: "USER",
         };
-        setMessages([...messages, newMessage]);
-        setSubmission(text.trim())
-        setText('');
-        textAreaRef.current.resizableTextArea.textArea.style.height = 'auto'; // Add this line
+
+        // Dispatch the ADD_MESSAGE action instead of calling setMessages
+        dispatch(addMessage(newMessage));
+
+        // Clear the text area and reset its height
+        setText("");
+
+        // Remove focus from the text area and show the placeholder
+        textAreaRef.current.resizableTextArea.textArea.blur();
+        setTimeout(() => {
+          textAreaRef.current.resizableTextArea.textArea.focus();
+        }, 0);
+
+        const loadingMessage = {
+          id: messages.length + 2,
+          text: "",
+          sender: "ASSISTANT",
+          loading: true,
+        };
+
+        // dispatch({ type: "ADD_MESSAGE", payload: loadingMessage });
+        dispatch(addMessage(loadingMessage));
+
+        // Call the getResponse method to get the API response
+        const response = await getResponse(newMessage.text, messages);
+
+        // Remove the loading message
+        dispatch(removeMessage(loadingMessage.id));
+
+        // Call the getResponse method to get the API response
+        const responseMessage = {
+          id: messages.length + 2,
+          text: response,
+          sender: "ASSISTANT",
+        };
+
+        // Dispatch the ADD_MESSAGE action for the response message
+        dispatch(addMessage(responseMessage));
       }
     },
-    [text, messages]
+    [text, messages, dispatch]
   );
-
-  useEffect(() => {
-    const fetchResponse = async () => {
-      setLoading(true);
-      try {
-        const response = await getResponse(submission);
-        const responseMessage = {
-          id: messages.length + 1,
-          text: response,
-          sender: "BOT",
-        };
-        setMessages([...messages, responseMessage]);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (messages.length > 0 && messages[messages.length - 1].sender === "USER") {
-      fetchResponse();
-    }
-  }, [messages]);
 
   useEffect(() => {
     messagesEndRef.current.scrollTop = messagesEndRef.current.scrollHeight;
@@ -126,8 +145,12 @@ const ChatBox = () => {
   return (
     <div style={chatContainerStyle}>
       <div style={chatBoxStyle} ref={messagesEndRef}>
-        <List dataSource={messages} renderItem={(message) => <Message message={message} />} />
-        {loading && <Skeleton active />}
+        <List
+          dataSource={messages}
+          renderItem={(message) => (
+            <Message message={message} loading={message.loading} />
+          )} // Pass the loading prop
+        />
       </div>
       <div style={inputSectionStyle}>
         <TextArea
@@ -136,7 +159,11 @@ const ChatBox = () => {
           value={text}
           onChange={(e) => setText(e.target.value)}
           onPressEnter={handleSendMessage}
-          style={ { width: 'calc(100% - 40px)', marginRight: '1rem', maxHeight: '100px' }} // Add maxHeight property
+          style={{
+            width: "calc(100% - 40px)",
+            marginRight: "1rem",
+            maxHeight: "100px",
+          }} // Add maxHeight property
           ref={textAreaRef} // Add this line
         />
         <SendOutlined onClick={handleSendMessage} style={sendIconStyle} />
