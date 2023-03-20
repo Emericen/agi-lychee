@@ -13,6 +13,8 @@ const chatContainerStyle = {
   height: "100%",
 };
 
+
+
 const chatBoxStyle = {
   overflowY: "auto",
   flexGrow: 1,
