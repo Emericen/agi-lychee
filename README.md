@@ -1,6 +1,6 @@
 ## TODOs
 
-* ~~Text box size bug when submitting~~
-* ~~Chain of thought~~
-* Responsive components for mobile
-* ~~Separate message tile component~~
+* Margin bottom in Terminal component
+* Phone # verification & record keeping (database?)
+* Policy & helper message refining
+* Stress test?
