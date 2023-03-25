@@ -1,12 +1,11 @@
 import { configureStore, createSlice } from "@reduxjs/toolkit";
 import thunk from "redux-thunk";
 import messageData from "./texts/messages.json";
-import policy from "./texts/policy";
 import { getResponse } from "./utils";
 
 const initialState = {
   initialized: false,
-  messages: [{ role: "system", content: policy }],
+  messages: [],
 };
 
 const messagesSlice = createSlice({
@@ -58,7 +57,7 @@ export const onUserEnter = (userText) => async (dispatch, getState) => {
   let lastTen = getState().messages.slice(-10); // Get last 10 messages
   lastTen = lastTen.filter(
     (msg) =>
-      msg.role === "user" || msg.role === "assistant" || msg.role === "system"
+      msg.role === "user" || msg.role === "assistant"
   ); // Remove input text box
 
   console.log("lastTen:");

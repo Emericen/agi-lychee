@@ -1,4 +1,8 @@
 {
     "welcome_text": "Welcome to the world of the future!",
-    "prompt_hint": "请输入问题或提示语..."
+    
+    "prompt_hint": "请输入问题或提示语...",
+    
+    "prompt_label": "问:",
+    "response_label": "答:"
 }

@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from "react";
 import { useSelector } from "react-redux";
 import LoadingDots from "./Loading";
 import TextInput from "./TextInput";
+import messageData from "../texts/messages.json";
 
 const terminalStyle = {
   fontFamily: "monospace",
@@ -44,14 +45,14 @@ const Terminal = (props) => {
       case "user":
         return (
           <div style={{ display: "flex" }}>
-            <div style={{ color: "lime" }}>问:</div>
+            <div style={{ color: "lime" }}>{messageData.prompt_label}</div>
             <div style={promptStyle}>{message.content}</div>
           </div>
         );
       case "assistant":
         return (
           <div style={{ display: "flex" }}>
-            <div style={{ color: "lime" }}>答:</div>
+            <div style={{ color: "lime" }}>{messageData.response_label}</div>
             <div style={responseStyle}>{message.content}</div>
           </div>
         );
@@ -64,7 +65,7 @@ const Terminal = (props) => {
       case "loading":
         return (
           <div style={{ display: "flex" }}>
-            <div style={{ color: "lime" }}>A:</div>
+            <div style={{ color: "lime" }}>{messageData.response_label}</div>
             <div style={responseStyle}>
               <LoadingDots />
             </div>
@@ -73,7 +74,7 @@ const Terminal = (props) => {
       case "input":
         return (
           <div style={{ display: "flex" }}>
-            <div style={{ color: "lime" }}>问:</div>
+            <div style={{ color: "lime" }}>{messageData.prompt_label}</div>
             <TextInput onEnter={props.onEnter} placeholder={message.content} />
           </div>
         );

@@ -1,20 +1,14 @@
-import { OPENAI_API_KEY } from "./config";
+import axios from "axios";
 
-const { Configuration, OpenAIApi } = require("openai");
-const configuration = new Configuration({
-  apiKey: OPENAI_API_KEY,
-});
-const openai = new OpenAIApi(configuration);
+const FLASK_BACKEND_URL = "http://localhost:5000/openai";
 
 export const getResponse = async (messages) => {
-  const response = await openai.createChatCompletion({
-    model: "gpt-3.5-turbo",
+  const response = await axios.post(FLASK_BACKEND_URL, {
     messages: messages,
-    temperature: 0.7,
-    max_tokens: 2000,
-    top_p: 1,
-    frequency_penalty: 0,
   });
 
-  return response["data"]["choices"][0]["message"]["content"];
-};
+  console.log(response.data);
+
+  return response.data["content"];
+}
+
