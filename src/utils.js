@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const FLASK_BACKEND_URL = "/api/openai";
+const FLASK_BACKEND_URL = "/openai";
 
 export const getResponse = async (messages) => {
   const response = await axios.post(FLASK_BACKEND_URL, {
