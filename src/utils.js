@@ -11,4 +11,3 @@ export const getResponse = async (messages) => {
 
   return response.data["content"];
 }
-
